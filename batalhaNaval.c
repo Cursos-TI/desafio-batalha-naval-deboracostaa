@@ -1,12 +1,12 @@
 #include <stdio.h>
 
 /*
- * Desafio Batalha Naval - Nivel Novato
+ * Desafio Batalha Naval - Nivel Aventureiro
  *
  * Este programa representa um tabuleiro 10x10 usando uma matriz e posiciona
- * dois navios de tamanho fixo igual a 3: um na horizontal e outro na vertical.
- * As posicoes com agua recebem o valor 0 e as partes dos navios recebem o
- * valor 3, conforme solicitado no enunciado.
+ * quatro navios de tamanho fixo igual a 3: um na horizontal, um na vertical e
+ * dois na diagonal. As posicoes com agua recebem o valor 0 e as partes dos
+ * navios recebem o valor 3, conforme solicitado no enunciado.
  */
 
 /* Constantes usadas para deixar o tamanho do tabuleiro e dos navios claro. */
@@ -21,8 +21,10 @@
  * Parametros:
  * - linhaInicial e colunaInicial: coordenadas onde a primeira parte do navio
  *   sera posicionada.
- * - orientacao: indica o sentido do navio. 'H' representa horizontal e 'V'
- *   representa vertical.
+ * - orientacao: indica o sentido do navio. 'H' representa horizontal, 'V'
+ *   representa vertical, 'D' representa diagonal principal (linha e coluna
+ *   aumentando) e 'I' representa diagonal inversa (linha aumentando e coluna
+ *   diminuindo).
  *
  * Retorno:
  * - 1 quando todas as partes do navio ficam dentro do tabuleiro.
@@ -51,7 +53,25 @@ int coordenadasSaoValidas(int linhaInicial, int colunaInicial, char orientacao) 
         return linhaInicial + TAMANHO_NAVIO <= TAMANHO_TABULEIRO;
     }
 
-    /* Qualquer orientacao diferente de H ou V e considerada invalida. */
+    /*
+     * Na diagonal principal, linha e coluna aumentam ao mesmo tempo.
+     * Portanto, a ultima linha e a ultima coluna precisam caber na matriz.
+     */
+    if (orientacao == 'D') {
+        return linhaInicial + TAMANHO_NAVIO <= TAMANHO_TABULEIRO &&
+               colunaInicial + TAMANHO_NAVIO <= TAMANHO_TABULEIRO;
+    }
+
+    /*
+     * Na diagonal inversa, a linha aumenta e a coluna diminui.
+     * A linha final precisa caber e a coluna final nao pode ficar negativa.
+     */
+    if (orientacao == 'I') {
+        return linhaInicial + TAMANHO_NAVIO <= TAMANHO_TABULEIRO &&
+               colunaInicial - (TAMANHO_NAVIO - 1) >= 0;
+    }
+
+    /* Qualquer orientacao diferente de H, V, D ou I e considerada invalida. */
     return 0;
 }
 
@@ -75,8 +95,14 @@ int navioNaoSobrepoe(int tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO],
         /* Ajusta a coordenada conforme a orientacao escolhida. */
         if (orientacao == 'H') {
             coluna = colunaInicial + parte;
+        } else if (orientacao == 'V') {
+            linha = linhaInicial + parte;
+        } else if (orientacao == 'D') {
+            linha = linhaInicial + parte;
+            coluna = colunaInicial + parte;
         } else {
             linha = linhaInicial + parte;
+            coluna = colunaInicial - parte;
         }
 
         /* Se a posicao ja contem navio, haveria sobreposicao. */
@@ -117,11 +143,17 @@ int posicionarNavio(int tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO],
         int linha = linhaInicial;
         int coluna = colunaInicial;
 
-        /* Na horizontal muda a coluna; na vertical muda a linha. */
+        /* Ajusta linha e coluna conforme horizontal, vertical ou diagonal. */
         if (orientacao == 'H') {
+            coluna = colunaInicial + parte;
+        } else if (orientacao == 'V') {
+            linha = linhaInicial + parte;
+        } else if (orientacao == 'D') {
+            linha = linhaInicial + parte;
             coluna = colunaInicial + parte;
         } else {
             linha = linhaInicial + parte;
+            coluna = colunaInicial - parte;
         }
 
         tabuleiro[linha][coluna] = navio[parte];
@@ -140,7 +172,7 @@ void exibirTabuleiro(int tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO]) {
     int linha;
     int coluna;
 
-    printf("Tabuleiro Batalha Naval - Nivel Novato\n\n");
+    printf("Tabuleiro Batalha Naval - Nivel Aventureiro\n\n");
 
     for (linha = 0; linha < TAMANHO_TABULEIRO; linha++) {
         for (coluna = 0; coluna < TAMANHO_TABULEIRO; coluna++) {
@@ -158,20 +190,26 @@ int main() {
     int tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO];
 
     /*
-     * Vetores unidimensionais que representam os dois navios.
+     * Vetores unidimensionais que representam os quatro navios.
      * Cada posicao possui o valor 3, usado para marcar navios no tabuleiro.
      */
     int navioHorizontal[TAMANHO_NAVIO] = {NAVIO, NAVIO, NAVIO};
     int navioVertical[TAMANHO_NAVIO] = {NAVIO, NAVIO, NAVIO};
+    int navioDiagonalPrincipal[TAMANHO_NAVIO] = {NAVIO, NAVIO, NAVIO};
+    int navioDiagonalInversa[TAMANHO_NAVIO] = {NAVIO, NAVIO, NAVIO};
 
     /*
      * Coordenadas iniciais definidas diretamente no codigo, conforme a
-     * simplificacao do nivel novato. Os indices comecam em 0.
+     * simplificacao do nivel aventureiro. Os indices comecam em 0.
      */
     int linhaNavioHorizontal = 2;
     int colunaNavioHorizontal = 3;
     int linhaNavioVertical = 5;
     int colunaNavioVertical = 7;
+    int linhaNavioDiagonalPrincipal = 0;
+    int colunaNavioDiagonalPrincipal = 0;
+    int linhaNavioDiagonalInversa = 0;
+    int colunaNavioDiagonalInversa = 9;
 
     int linha;
     int coluna;
@@ -194,6 +232,22 @@ int main() {
     if (!posicionarNavio(tabuleiro, navioVertical, linhaNavioVertical,
                          colunaNavioVertical, 'V')) {
         printf("Erro: navio vertical possui coordenadas invalidas ou sobreposicao.\n");
+        return 1;
+    }
+
+    /* Tenta posicionar o navio na diagonal principal e encerra se houver erro. */
+    if (!posicionarNavio(tabuleiro, navioDiagonalPrincipal,
+                         linhaNavioDiagonalPrincipal,
+                         colunaNavioDiagonalPrincipal, 'D')) {
+        printf("Erro: navio diagonal principal possui coordenadas invalidas ou sobreposicao.\n");
+        return 1;
+    }
+
+    /* Tenta posicionar o navio na diagonal inversa e encerra se houver erro. */
+    if (!posicionarNavio(tabuleiro, navioDiagonalInversa,
+                         linhaNavioDiagonalInversa,
+                         colunaNavioDiagonalInversa, 'I')) {
+        printf("Erro: navio diagonal inversa possui coordenadas invalidas ou sobreposicao.\n");
         return 1;
     }
 
